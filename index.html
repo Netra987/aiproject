@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptarithmetic Solver</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Cryptarithmetic Solver</h1>
+        <p>Enter an equation like <strong>SEND + MORE = MONEY</strong></p>
+        <input type="text" id="equationInput" placeholder="Enter equation">
+        <button onclick="solveEquation()">Solve</button>
+        <div id="solution"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
