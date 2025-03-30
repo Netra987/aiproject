@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,28 +10,90 @@
     <div class="container">
         <h1>Cryptarithmetic Solver</h1>
         <p>Enter an equation like <strong>SEND + MORE = MONEY</strong></p>
-        <input type="text" id="equationInput" placeholder="Enter equation">
-        <button onclick="solveEquation()">Solve</button>
+
+        <button id="startBtn" onclick="startGame()">Start</button>
+        <p id="equationDisplay"></p>
+
+        <button id="solveBtn" onclick="solveEquation()" style="display:none;">Solve</button>
+        <button id="nextBtn" onclick="getNextEquation()" style="display:none;">Next</button>
+        <button id="stopBtn" onclick="stopGame()" style="display:none;">Stop</button>
+
         <div id="solution"></div>
     </div>
 
-    <!-- JavaScript Code Directly Inside index.html -->
     <script>
+        let currentEquation = "";
+
+        function startGame() {
+            document.getElementById("solution").innerHTML = "";
+            document.getElementById("startBtn").style.display = "none"; // Hide Start button
+
+            fetch('/get_equation')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("equationDisplay").innerText = data.error;
+                        document.getElementById("startBtn").style.display = "inline-block"; // Show Start button again if no equations left
+                        return;
+                    }
+                    currentEquation = data.equation;
+                    document.getElementById("equationDisplay").innerText = "Equation: " + currentEquation;
+                    document.getElementById("solveBtn").style.display = "inline-block";
+                    document.getElementById("stopBtn").style.display = "inline-block";
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
         function solveEquation() {
-            const equation = document.getElementById("equationInput").value;
+            document.getElementById("solution").innerHTML = "<p>Solving...</p>";
 
             fetch('/solve', {
                 method: 'POST',
-                body: JSON.stringify({ equation }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                body: JSON.stringify({ equation: currentEquation }),
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById("solution").innerHTML = JSON.stringify(data.solution, null, 2);
+                if (data.error) {
+                    document.getElementById("solution").innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    let solutionHTML = "<h3>Solution:</h3><ul>";
+                    for (const [letter, digit] of Object.entries(data.solution)) {
+                        solutionHTML += `<li><strong>${letter}</strong> = ${digit}</li>`;
+                    }
+                    solutionHTML += "</ul>";
+
+                    let stepsHTML = "<h3>Calculation Steps:</h3><ul>";
+                    data.calculation.steps.forEach(step => {
+                        stepsHTML += `<li>${step}</li>`;
+                    });
+                    stepsHTML += "</ul>";
+
+                    let finalExpressionHTML = `<h3>Final Calculation:</h3><p>${data.calculation.expression}</p>`;
+
+                    document.getElementById("solution").innerHTML = solutionHTML + stepsHTML + finalExpressionHTML;
+                }
+
+                document.getElementById("solveBtn").style.display = "none";
+                document.getElementById("nextBtn").style.display = "inline-block";
             })
             .catch(error => console.error('Error:', error));
+        }
+
+        function getNextEquation() {
+            document.getElementById("solution").innerHTML = "";
+            document.getElementById("nextBtn").style.display = "none";
+            document.getElementById("solveBtn").style.display = "inline-block";
+            startGame();
+        }
+
+        function stopGame() {
+            document.getElementById("equationDisplay").innerText = "Game Stopped.";
+            document.getElementById("solution").innerHTML = "";
+            document.getElementById("solveBtn").style.display = "none";
+            document.getElementById("nextBtn").style.display = "none";
+            document.getElementById("stopBtn").style.display = "none";
+            document.getElementById("startBtn").style.display = "inline-block"; // Show Start button again
         }
     </script>
 </body>
